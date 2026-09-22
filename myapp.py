@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import os
 import math
+import joblib
 
 # ---------------- PAGE CONFIG ----------------
 st.set_page_config(
@@ -481,6 +482,18 @@ def calculate_emi(principal, annual_rate, term_months):
         return principal / max(1, term_months)
 
 
+# Load Pretrained ML Model Pipeline
+@st.cache_resource
+def load_trained_model():
+    model_path = "loan_model.pkl"
+    if os.path.exists(model_path):
+        try:
+            return joblib.load(model_path)
+        except Exception:
+            return None
+    return None
+
+
 # =====================================================
 # 1. DASHBOARD
 # =====================================================
@@ -736,40 +749,58 @@ elif page == "🤖 Smart Prediction":
     predict_btn = st.button("🚀 Calculate Risk Assessment")
 
     if predict_btn:
-        # Multi-Factor Risk Calculation Engine considering ALL applicant fields
-        risk_points = 0.0
+        # Construct DataFrame for the applicant matching trained model schema
+        applicant_df = pd.DataFrame([{
+            'Age': int(age),
+            'Income': int(income),
+            'LoanAmount': int(loan_amount),
+            'CreditScore': int(credit_score),
+            'MonthsEmployed': int(months_employed),
+            'NumCreditLines': int(num_credit_lines),
+            'InterestRate': float(interest_rate),
+            'LoanTerm': int(loan_term),
+            'DTIRatio': float(dti_ratio),
+            'Education': str(education),
+            'EmploymentType': str(employment_type),
+            'MaritalStatus': str(marital_status),
+            'HasMortgage': str(has_mortgage),
+            'HasDependents': str(has_dependents),
+            'LoanPurpose': str(loan_purpose),
+            'HasCoSigner': str(has_cosigner)
+        }])
 
-        # 1. Credit Score Impact
-        if credit_score < 580: risk_points += 35
-        elif credit_score < 670: risk_points += 20
-        elif credit_score < 740: risk_points += 8
+        model = load_trained_model()
+        if model is not None:
+            # Predict default probability using the saved Gradient Boosting model pipeline
+            prob_default = float(model.predict_proba(applicant_df)[0, 1])
+            risk_score = prob_default * 100
+            model_info = "⚡ Powered by Trained ML Model (loan_model.pkl — Gradient Boosting)"
+        else:
+            # Fallback heuristic calculation if model file not found
+            risk_points = 0.0
+            if credit_score < 580: risk_points += 35
+            elif credit_score < 670: risk_points += 20
+            elif credit_score < 740: risk_points += 8
 
-        # 2. DTI & Payment Ratios Impact
-        if dti_ratio > 0.45: risk_points += 20
-        elif dti_ratio > 0.30: risk_points += 10
+            if dti_ratio > 0.45: risk_points += 20
+            elif dti_ratio > 0.30: risk_points += 10
+            if payment_dti > 0.40: risk_points += 15
 
-        if payment_dti > 0.40: risk_points += 15
+            if employment_type == "Unemployed": risk_points += 30
+            elif employment_type == "Part-time": risk_points += 12
+            if months_employed < 12: risk_points += 10
+            elif months_employed > 36: risk_points -= 8
 
-        # 3. Employment & Income Impact
-        if employment_type == "Unemployed": risk_points += 30
-        elif employment_type == "Part-time": risk_points += 12
+            if has_cosigner == "Yes": risk_points -= 15
+            if has_mortgage == "Yes": risk_points += 5
+            if has_dependents == "Yes": risk_points += 4
 
-        if months_employed < 12: risk_points += 10
-        elif months_employed > 36: risk_points -= 8
+            if interest_rate > 15.0: risk_points += 10
+            if loan_amount > income * 1.5: risk_points += 12
+            if education in ["Master's", "PhD"]: risk_points -= 5
 
-        # 4. Financial Security & Co-signer
-        if has_cosigner == "Yes": risk_points -= 15
-        if has_mortgage == "Yes": risk_points += 5
-        if has_dependents == "Yes": risk_points += 4
-
-        # 5. Loan Parameters
-        if interest_rate > 15.0: risk_points += 10
-        if loan_amount > income * 1.5: risk_points += 12
-
-        # 6. Education
-        if education in ["Master's", "PhD"]: risk_points -= 5
-
-        risk_score = max(5.0, min(95.0, risk_points))
+            risk_score = max(5.0, min(95.0, risk_points))
+            model_info = "⚙️ Powered by Heuristic Scoring Engine (loan_model.pkl not loaded)"
 
         # Output Badge & Classification
         if risk_score < 30:
@@ -792,7 +823,8 @@ elif page == "🤖 Smart Prediction":
             <div class="{c_box}">
                 <span class="pred-badge {c_badge}">{c_text}</span>
                 <div class="pred-score">{risk_score:.1f}% Default Probability</div>
-                <div style="font-size:14px; color:#475569;">{desc}</div>
+                <div style="font-size:14px; color:#475569; margin-bottom:8px;">{desc}</div>
+                <div style="font-size:12px; font-weight:600; color:#4f46e5;">{model_info}</div>
             </div>
         """, unsafe_allow_html=True)
 
@@ -856,14 +888,40 @@ elif page == "💡 What-If Simulator":
 
     st.markdown("</div>", unsafe_allow_html=True)
 
-    base_risk = 45.0 + (650 - sim_credit) * 0.10 + (sim_interest - 10) * 1.2 - (15 if sim_cosigner == "Yes" else 0)
-    sim_risk_score = max(5.0, min(95.0, base_risk))
+    model = load_trained_model()
+    if model is not None:
+        sim_df = pd.DataFrame([{
+            'Age': 35,
+            'Income': 65000,
+            'LoanAmount': int(sim_loan),
+            'CreditScore': int(sim_credit),
+            'MonthsEmployed': 36,
+            'NumCreditLines': 3,
+            'InterestRate': float(sim_interest),
+            'LoanTerm': 36,
+            'DTIRatio': 0.35,
+            'Education': "Bachelor's",
+            'EmploymentType': 'Full-time',
+            'MaritalStatus': 'Married',
+            'HasMortgage': 'No',
+            'HasDependents': 'No',
+            'LoanPurpose': 'Auto',
+            'HasCoSigner': str(sim_cosigner)
+        }])
+        sim_prob = float(model.predict_proba(sim_df)[0, 1])
+        sim_risk_score = sim_prob * 100
+        sim_source = "⚡ Powered by Trained ML Model (loan_model.pkl)"
+    else:
+        base_risk = 45.0 + (650 - sim_credit) * 0.10 + (sim_interest - 10) * 1.2 - (15 if sim_cosigner == "Yes" else 0)
+        sim_risk_score = max(5.0, min(95.0, base_risk))
+        sim_source = "⚙️ Simulation Formula"
 
     st.markdown(f"""
         <div class="clean-card" style="text-align:center;">
             <div style="font-size:12px; font-weight:700; color:#64748b; text-transform:uppercase;">Simulated Risk Result</div>
             <div style="font-size:42px; font-weight:800; color:{'#16a34a' if sim_risk_score < 35 else '#dc2626'}; margin:6px 0;">{sim_risk_score:.1f}%</div>
             <div style="font-size:14px; font-weight:600; color:#0f172a;">Risk Level: {'🟢 LOW RISK' if sim_risk_score < 35 else ('🟡 MODERATE RISK' if sim_risk_score < 60 else '🔴 HIGH RISK')}</div>
+            <div style="font-size:12px; color:#4f46e5; margin-top:6px; font-weight:600;">{sim_source}</div>
         </div>
     """, unsafe_allow_html=True)
 
