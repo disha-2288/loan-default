@@ -1,9 +1,24 @@
 [theme]
-primaryColor = "#4f46e5"
-backgroundColor = "#f8fafc"
-secondaryBackgroundColor = "#ffffff"
-textColor = "#0f172a"
-font = "sans serif"
+base = "dark"
+primaryColor = "#8B7CFF"
+backgroundColor = "#07080C"
+secondaryBackgroundColor = "#11131A"
+textColor = "#E8EAF0"
+linkColor = "#A99DFF"
+borderColor = "#1F2230"
+showWidgetBorder = true
+showSidebarBorder = false
+baseRadius = "0.75rem"
+buttonRadius = "999px"
+font = "'Geist':https://fonts.googleapis.com/css2?family=Geist:wght@300..800&display=swap, sans-serif"
+headingFont = "'Geist':https://fonts.googleapis.com/css2?family=Geist:wght@300..800&display=swap, sans-serif"
+codeFont = "'Geist Mono':https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400..600&display=swap, monospace"
+chartCategoricalColors = ["#8B7CFF", "#5EEAD4", "#FBBF24", "#F87171", "#60A5FA", "#F0ABFC"]
+
+[theme.sidebar]
+backgroundColor = "#0A0B10"
+secondaryBackgroundColor = "#141620"
+borderColor = "#1C1F2B"
 
 [client]
 toolbarMode = "minimal"

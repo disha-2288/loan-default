@@ -1,5 +1,7 @@
-streamlit
-pandas
-numpy
-scikit-learn
-joblib
+streamlit==1.58.0
+pandas>=2.2
+numpy>=1.26
+scikit-learn==1.9.0
+joblib>=1.4
+matplotlib>=3.8
+altair>=5.4

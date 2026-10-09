@@ -1,0 +1,36 @@
+{
+  "model": "Gradient Boosting",
+  "params": {
+    "n_estimators": 200,
+    "learning_rate": 0.05,
+    "max_depth": 5
+  },
+  "accuracy": 0.8861,
+  "roc_auc": 0.7569,
+  "train_rows": 204277,
+  "test_rows": 51070,
+  "default_rate": 0.1161,
+  "preprocessing": {
+    "rows_loaded": 255347,
+    "duplicates_removed": 0,
+    "missing_values_filled": 0,
+    "outliers_removed": 0,
+    "rows_final": 255347
+  },
+  "feature_importance": {
+    "income_to_loan": 0.3015447540990097,
+    "age": 0.25093998559514535,
+    "interestrate": 0.18786454262934785,
+    "monthsemployed": 0.11068707995472175,
+    "creditscore": 0.026409660074823982,
+    "employmenttype": 0.02251901777818252,
+    "income": 0.01930155897297223,
+    "loanamount": 0.017118640205291823,
+    "hascosigner": 0.01429620488949012,
+    "hasdependents": 0.013187644635254212,
+    "credit_term_interaction": 0.01227847796774301,
+    "education": 0.009944680250365535,
+    "numcreditlines": 0.00914970676362702,
+    "hasmortgage": 0.004758046184024894
+  }
+}
